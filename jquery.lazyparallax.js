@@ -36,7 +36,7 @@
                         elem.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
 
                         $content.css({
-                            'transform': 'translate(-50%,calc(-50% - ' + Number((context.position - elem.position) * options.speed) + 'px)',
+                            'transform': 'translate3d(-50%,calc(-50% - ' + Number((context.position - elem.position) * options.speed) + 'px),0)',
                             'min-height': elem.height + 'px'
                         });
                     } else {
@@ -127,7 +127,7 @@
                         'top': '50%',
                         'left': '50%',
                         'min-width': '100%',
-                        'transform': 'translate(-50%,-50%)',
+                        'transform': 'translate3d(-50%,-50%,0)',
                         'transition': options.animate + 'ms opacity',
                         'opacity': '0'
                     });

@@ -34,16 +34,15 @@
 
         this.each(function () {
             var $elem = $(this),
-                $content;
+                $content = null;
 
             /* lazyLoad if not already loaded */
             if ($elem.data('loaded') !== true) {
 
                 $elem.data('loaded', true);
-                var src = $elem.attr('data-src');
 
-                /* if the image has not been lazy-loaded and has a src, proceed with loading */
-                if (src !== null) {
+                /* if the content has not been lazy-loaded and has a src, proceed with loading */
+                if ($elem.data('img') !== null || $elem.data('iframe') !== null) {
 
                     /* add a new deferred for this image to the array */
                     var dfd = new $.Deferred();
@@ -52,8 +51,7 @@
                     /* add loading class for CSS convenience */
                     $elem.addClass(options.loadingClass);
 
-
-                    if (!$elem.data('tag') || $elem.data('tag') === 'img') {
+                    if ($elem.data('img') !== undefined) {
 
                         /* create an anonymous Image and define its load callback */
                         var img = new Image();
@@ -77,10 +75,10 @@
 
                         /* initiate loading of this image by setting its src prop.
                             load callback will execute when loading is complete */
-                        img.src = src;
+                        img.src = $elem.data('img');
                     }
 
-                    if ($elem.data('tag') === 'iframe') {
+                    if ($elem.data('iframe') !== undefined && $content === null) {
 
                         /* create an iframe */
                         var ifrm = document.createElement("IFRAME");
@@ -99,7 +97,8 @@
                         $elem.append($content);
 
                         /* init */
-                        $content.attr('src', src);
+                        $content.attr('src', $elem.data('iframe'));
+                        
                     }
 
 
@@ -114,7 +113,8 @@
                         'left': '50%',
                         'min-width': '100%',
                         'transform': 'translate(-50%,-50%)',
-                        'opacity': '0'
+                        'opacity': '0',
+                        'transition': options.animate + 'ms opacity'
                     });
 
                     elems.push({
@@ -150,12 +150,11 @@
             /* show content */
             $.each(elems, function (index, value) {
                 $(value.content).css({
-                    'transition': options.animate + 's opacity',
+                    
                     'opacity': '1'
                 });
             });
         });
-
 
         /* eventlisteners */
         options.context

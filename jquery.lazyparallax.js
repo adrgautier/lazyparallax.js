@@ -6,11 +6,13 @@
                 'speed': 0,
                 'animate': 0,
                 'context': $(window),
+                'mincontextwidth': 0,
                 'loadingClass': 'loading',
                 'maxTimeout': 1000
             }, params),
             context = {
                 'height': Number(),
+                'width': Number(),
                 'position': Number()
             },
             elems = [],
@@ -20,14 +22,26 @@
                     var $elem = $(value.elem),
                         $content = $(value.content),
                         elem = {};
+                    if (context.width > options.mincontextwidth) {
+                        $content.css({
+                            'position': 'absolute',
+                            'top': '50%',
+                            'left': '50%',
+                            'min-width': '100%',
+                            'transition': options.animate + 'ms opacity',
+                            'opacity': '1'
+                        });
 
-                    elem.position = $elem.offset().top + $elem.height() / 2;
-                    elem.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
+                        elem.position = $elem.offset().top + $elem.height() / 2;
+                        elem.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
 
-                    $content.css({
-                        'transform': 'translate(-50%,calc(-50% - ' + Number((context.position - elem.position) * options.speed) + 'px)',
-                        'min-height': elem.height + 'px'
-                    });
+                        $content.css({
+                            'transform': 'translate(-50%,calc(-50% - ' + Number((context.position - elem.position) * options.speed) + 'px)',
+                            'min-height': elem.height + 'px'
+                        });
+                    } else {
+                        $content.removeAttr('style');
+                    }
                 });
             };
 
@@ -98,7 +112,7 @@
 
                         /* init */
                         $content.attr('src', $elem.data('iframe'));
-                        
+
                     }
 
 
@@ -107,14 +121,15 @@
                         'position': 'relative',
                         'overflow': 'hidden'
                     });
+
                     $content.css({
                         'position': 'absolute',
                         'top': '50%',
                         'left': '50%',
                         'min-width': '100%',
                         'transform': 'translate(-50%,-50%)',
-                        'opacity': '0',
-                        'transition': options.animate + 'ms opacity'
+                        'transition': options.animate + 'ms opacity',
+                        'opacity': '0'
                     });
 
                     elems.push({
@@ -147,19 +162,13 @@
             /* init parallax */
             options.context.trigger('resize');
 
-            /* show content */
-            $.each(elems, function (index, value) {
-                $(value.content).css({
-                    
-                    'opacity': '1'
-                });
-            });
         });
 
         /* eventlisteners */
         options.context
             .on('resize', function () {
                 context.height = options.context.height();
+                context.width = options.context.width();
                 /* force scroll */
                 options.context.trigger('scroll');
             })

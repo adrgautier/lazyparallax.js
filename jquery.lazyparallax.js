@@ -38,6 +38,7 @@
                         var transY = Number((context.position - elem.position) * options.speed);
                         $content.css({
                             'transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
+                            '-ms-transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
                             '-webkit-transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
                             'min-height': elem.height + 'px'
                         });
@@ -130,6 +131,7 @@
                         'left': '50%',
                         'min-width': '100%',
                         'transform': 'translate(-50%,-50%)',
+                        '-ms-transform': 'translate(-50%,-50%)',
                         '-webkit-transform': 'translate(-50%,-50%)',
                         'transition': options.animate + 'ms opacity',
                         'opacity': '0'

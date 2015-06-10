@@ -34,9 +34,11 @@
 
                         elem.position = $elem.offset().top + $elem.height() / 2;
                         elem.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
-
+                        
+                        var transY = Number((context.position - elem.position) * options.speed);
                         $content.css({
-                            'transform': 'translate3d(-50%,calc(-50% - ' + Number((context.position - elem.position) * options.speed) + 'px),0)',
+                            'transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
+                            '-webkit-transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
                             'min-height': elem.height + 'px'
                         });
                     } else {
@@ -127,7 +129,8 @@
                         'top': '50%',
                         'left': '50%',
                         'min-width': '100%',
-                        'transform': 'translate3d(-50%,-50%,0)',
+                        'transform': 'translate(-50%,-50%)',
+                        '-webkit-transform': 'translate(-50%,-50%)',
                         'transition': options.animate + 'ms opacity',
                         'opacity': '0'
                     });

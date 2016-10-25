@@ -4,11 +4,12 @@
         /* variables */
         var options = $.extend({
                 'speed': 0,
-                'animate': 0,
+                'fade': 0,
                 'context': $(window),
-                'mincontextwidth': 0,
                 'loadingClass': 'loading',
-                'maxTimeout': 1000
+                'maxTimeout': 1000,
+                'inCondition': function(){return true;},
+                'responsive': true
             }, params),
             context = {
                 'height': Number(),
@@ -19,32 +20,40 @@
             dfdList = [],
             move = function () {
                 $.each(elems, function (index, value) {
-                    var $elem = $(value.elem),
-                        $content = $(value.content),
-                        elem = {};
-                    if (context.width > options.mincontextwidth) {
-                        $content.css({
-                            'position': 'absolute',
-                            'top': '50%',
-                            'left': '50%',
-                            'min-width': '100%',
-                            'transition': options.animate + 'ms opacity',
-                            'opacity': '1'
-                        });
+                    var $elem = value.elem,
+                        $content = value.content,
+                        properties = value.properties;
 
-                        elem.position = $elem.offset().top + $elem.height() / 2;
-                        elem.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
-                        
-                        var transY = Number((context.position - elem.position) * options.speed);
-                        $content.css({
-                            'transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
-                            '-ms-transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
-                            '-webkit-transform': 'translate(-50%,calc(-50% - ' + transY + 'px))',
-                            'min-height': elem.height + 'px'
-                        });
-                    } else {
-                        $content.removeAttr('style');
-                    }
+                    var transY = Number((context.position - properties.position) * options.speed);
+
+                    $content.css({
+                        'position': 'absolute',
+                        'top': '50%',
+                        'left': '50%',
+                        'transition': options.fade + 'ms opacity',
+                        'opacity': '1',
+                        'transform': 'translate(-50%,calc(-50% - ' + transY + 'px)) scale( ' + properties.scale + ' )',
+                        '-ms-transform': 'translate(-50%,calc(-50% - ' + transY + 'px)) scale( ' + properties.scale + ' )',
+                        '-webkit-transform': 'translate(-50%,calc(-50% - ' + transY + 'px)) scale( ' + properties.scale + ' )'
+                    });
+                });
+            },
+            scale = function(){
+                $.each(elems, function (index, value) {
+                    var $elem = value.elem,
+                        $content = value.content,
+                        properties = value.properties;
+
+                    $content.css({
+                        'position': 'absolute',
+                        'top': '50%',
+                        'left': '50%',
+                        'transition': options.fade + 'ms opacity',
+                        'opacity': '1',
+                        'transform': 'translate(-50%,-50%) scale( ' + properties.scale + ' )',
+                        '-ms-transform': 'translate(-50%,-50%) scale( ' + properties.scale + ' )',
+                        '-webkit-transform': 'translate(-50%,-50%) scale( ' + properties.scale + ' )'
+                    });
                 });
             };
 
@@ -59,7 +68,7 @@
                 $elem.data('loaded', true);
 
                 /* if the content has not been lazy-loaded and has a src, proceed with loading */
-                if ($elem.data('img') !== null || $elem.data('iframe') !== null) {
+                if ($elem.data('img') !== null || $elem.data('iframe') !== null || $elem.data('video') !== null) {
 
                     /* add a new deferred for this image to the array */
                     var dfd = new $.Deferred();
@@ -74,7 +83,7 @@
                         var img = new Image();
                         $content = $(img);
 
-                        $content.load(function () {
+                        $content.on("load", function () {
 
                             /* add image into elem */
                             $elem.append($content);
@@ -84,15 +93,26 @@
 
                             /* resolve this image's deferred */
                             dfd.resolve();
+
+                            options.imgLoadedCallback($content, $elem);
+
                         });
 
-                        $content.error(function () {
+                        $content.on("error", function () {
                             $elem.trigger('error');
                         });
 
                         /* initiate loading of this image by setting its src prop.
-                            load callback will execute when loading is complete */
+                         load callback will execute when loading is complete */
                         img.src = $elem.data('img');
+
+                        $content.realHeight = function(){
+                            return this[0].height;
+                        }
+
+                        $content.realWidth = function(){
+                            return this[0].width;
+                        }
                     }
 
                     if ($elem.data('iframe') !== undefined && $content === null) {
@@ -101,7 +121,7 @@
                         var ifrm = document.createElement("IFRAME");
                         $content = $(ifrm);
 
-                        $content.load(function () {
+                        $content.on("load", function () {
 
                             /* remove CSS loading class */
                             $elem.removeClass(options.loadingClass);
@@ -114,7 +134,48 @@
                         $elem.append($content);
 
                         /* init */
-                        $content.attr('src', $elem.data('iframe'));
+                        ifrm.src = $elem.data('iframe');
+
+                        $content.realHeight = function(){
+                            return this[0].height;
+                        }
+
+                        $content.realWidth = function(){
+                            return this[0].hidth;
+                        }
+
+                    }
+
+                    if ($elem.data('video') !== undefined && $content === null) {
+
+                        /* create a video tag */
+                        var vid = document.createElement("VIDEO");
+                        $content = $(vid);
+
+                        $content.on("load", function () {
+
+                            /* remove CSS loading class */
+                            $elem.removeClass(options.loadingClass);
+
+                            /* resolve this image's deferred */
+                            dfd.resolve();
+                        });
+
+                        /* add video into elem */
+                        $elem.append($content);
+
+                        /* init */
+                        vid.autoplay = true;
+                        vid.loop = true;
+                        vid.src = $elem.data('video');
+
+                        $content.realHeight = function(){
+                            return this[0].videoHeight;
+                        }
+
+                        $content.realWidth = function(){
+                            return this[0].videoWidth;
+                        }
 
                     }
 
@@ -129,17 +190,17 @@
                         'position': 'absolute',
                         'top': '50%',
                         'left': '50%',
-                        'min-width': '100%',
+                        'transition': options.fade + 'ms opacity',
+                        'opacity': '0',
                         'transform': 'translate(-50%,-50%)',
                         '-ms-transform': 'translate(-50%,-50%)',
-                        '-webkit-transform': 'translate(-50%,-50%)',
-                        'transition': options.animate + 'ms opacity',
-                        'opacity': '0'
+                        '-webkit-transform': 'translate(-50%,-50%)'
                     });
 
                     elems.push({
                         'elem': $elem,
-                        'content': $content
+                        'content': $content,
+                        'properties': {}
                     });
 
                 }
@@ -174,12 +235,57 @@
             .on('resize', function () {
                 context.height = options.context.height();
                 context.width = options.context.width();
+
+                $.each(elems, function (index, value) {
+                    var $elem = value.elem,
+                        $content = value.content,
+                        properties = value.properties;
+                    if (options.inCondition()) {
+
+                        properties.position = $elem.offset().top + $elem.height() / 2;
+                        properties.height = ((Math.abs(options.speed) * context.height) + (Math.abs(1 + options.speed) * $elem.height()));
+                        properties.scale = 1;
+
+                        var dHeight = properties.height - $content.realHeight(),
+                            dWidth = $elem.width() - $content.realWidth(),
+                            vScale = 1 + (dHeight + 1) / $content.realHeight(),
+                            hScale = 1 + (dWidth + 1) / $content.realWidth();
+
+                        if (vScale > hScale) {
+                            properties.scale = vScale;
+                        }
+                        else {
+                            properties.scale = hScale;
+                        }
+                    }else if(options.responsive == true){
+                        properties.scale = 1;
+
+                        var dHeight = $elem.height() - $content.realHeight(),
+                            dWidth = $elem.width() - $content.realWidth(),
+                            vScale = 1 + (dHeight + 1) / $content.realHeight(),
+                            hScale = 1 + (dWidth + 1) / $content.realWidth();
+
+                        if (vScale > hScale) {
+                            properties.scale = vScale;
+                        }
+                        else {
+                            properties.scale = hScale;
+                        }
+                    }
+                    else{
+                        $content.removeAttr('style');
+                    }
+                });
                 /* force scroll */
                 options.context.trigger('scroll');
             })
             .on('scroll', function () {
                 context.position = options.context.scrollTop() + context.height / 2;
-                move();
+                if (options.inCondition()) {
+                    move();
+                }else if(options.responsive == true){
+                    scale();
+                }
             });
 
         return this;
